@@ -59,6 +59,9 @@ data class ZombieGameState(
     val isLoading: Boolean = true,
     val remotePlayers: List<RemoteZombiePlayer> = emptyList(),
 
+    // ─── Partículas de sangre ─────────────────────────────
+    val bloodParticles: List<BloodParticle> = emptyList(),
+
     // ─── MODO DISEÑADOR DE LA MATRIZ DE COLISIÓN ───────────
     // Análogo al modo diseñador del mapa principal: se activa/desactiva, se
     // pinta la rejilla sobre el cuarto y se guarda en collision_matrices.json.
@@ -72,4 +75,14 @@ data class CameraTransform(
     val offsetX: Float,
     val offsetY: Float,
     val scale: Float
+)
+
+data class BloodParticle(
+    val id: Long,
+    val x: Float,
+    val y: Float,
+    val vx: Float,
+    val vy: Float,
+    val life: Float, // 1.0 -> 0.0
+    val size: Float
 )

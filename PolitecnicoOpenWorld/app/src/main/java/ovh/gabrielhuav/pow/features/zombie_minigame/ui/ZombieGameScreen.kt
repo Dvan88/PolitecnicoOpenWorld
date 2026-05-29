@@ -173,6 +173,23 @@ fun ZombieGameScreen(
                 }
             }
 
+            // ─── PARTÍCULAS DE SANGRE ──────────────────────────
+            if (!state.designerMode) {
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    translate(cam.offsetX, cam.offsetY) {
+                        scale(cam.scale, cam.scale, pivot = Offset.Zero) {
+                            state.bloodParticles.forEach { p ->
+                                drawCircle(
+                                    color = Color(0xFFD32F2F).copy(alpha = p.life),
+                                    radius = p.size,
+                                    center = Offset(p.x, p.y)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
             fun toScreenX(wx: Float) = cam.offsetX + wx * cam.scale
             fun toScreenY(wy: Float) = cam.offsetY + wy * cam.scale
 

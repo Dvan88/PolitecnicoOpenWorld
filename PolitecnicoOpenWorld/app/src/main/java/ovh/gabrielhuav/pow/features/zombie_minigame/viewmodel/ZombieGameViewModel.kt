@@ -131,6 +131,7 @@ class ZombieGameViewModel(
     private var lastRangedShotMs = 0L
     private var yPressStartMs = 0L
     private var lastRoomId: String? = null
+    private var nextParticleId = 0L
 
     init {
         _state.update { it.copy(isLoading = true) }
@@ -509,6 +510,17 @@ class ZombieGameViewModel(
         var finalPX = s.playerX
         var finalPY = s.playerY
 
+        // Actualizar partículas de sangre existentes
+        val newBloodParticles = s.bloodParticles.map { p ->
+            p.copy(
+                x = p.x + p.vx,
+                y = p.y + p.vy,
+                vx = p.vx * 0.96f,
+                vy = p.vy * 0.96f + 0.12f, // Gravedad
+                life = p.life - 0.05f
+            )
+        }.filter { it.life > 0f }.toMutableList()
+
         var workingZombies = s.zombies.map { z ->
             if (z.isDying) return@map z
             val moved = moveZombie(z, s.playerX, s.playerY, now, room, speedFactor)
@@ -516,6 +528,21 @@ class ZombieGameViewModel(
             if (dist <= CONTACT_DIST && now - moved.lastDamageToPlayerMs >= ZOMBIE_DAMAGE_COOLDOWN_MS) {
                 newHealth -= ZOMBIE_DAMAGE * dmgFactor
                 pulse += 1
+
+                // Generar partículas de sangre (Requerimiento de usuario)
+                repeat(8) {
+                    val angle = Math.random() * 2.0 * Math.PI
+                    val speed = 2f + Math.random().toFloat() * 3f
+                    newBloodParticles.add(BloodParticle(
+                        id = nextParticleId++,
+                        x = s.playerX,
+                        y = s.playerY,
+                        vx = cos(angle).toFloat() * speed,
+                        vy = sin(angle).toFloat() * speed,
+                        life = 1.0f,
+                        size = 4f + Math.random().toFloat() * 4f
+                    ))
+                }
 
                 // Aplicar retroceso al jugador al ser golpeado (Offline)
                 val dx = s.playerX - moved.x
@@ -578,6 +605,7 @@ class ZombieGameViewModel(
                 playerX = finalPX,
                 playerY = finalPY,
                 damagePulseTrigger = pulse,
+                bloodParticles = newBloodParticles,
                 zombiesRemaining = workingZombies.count { z -> !z.isDying },
                 nearbyItemId = nearItem?.id,
                 activeEffects = if (effectsChanged) stillActive else it.activeEffects
@@ -610,6 +638,17 @@ class ZombieGameViewModel(
         var finalPX = s.playerX
         var finalPY = s.playerY
 
+        // Actualizar partículas de sangre existentes
+        val newBloodParticles = s.bloodParticles.map { p ->
+            p.copy(
+                x = p.x + p.vx,
+                y = p.y + p.vy,
+                vx = p.vx * 0.96f,
+                vy = p.vy * 0.96f + 0.12f,
+                life = p.life - 0.05f
+            )
+        }.filter { it.life > 0f }.toMutableList()
+
         // Proyectiles: al impactar a un zombi del servidor, PEDIMOS daño.
         val survivingProjectiles = mutableListOf<Projectile>()
         for (p in s.projectiles) {
@@ -636,6 +675,21 @@ class ZombieGameViewModel(
                     newHealth -= ZOMBIE_DAMAGE * dmgFactor
                     pulse += 1
                     contactCooldown[z.id] = now
+
+                    // Generar sangre
+                    repeat(8) {
+                        val angle = Math.random() * 2.0 * Math.PI
+                        val speed = 2f + Math.random().toFloat() * 3f
+                        newBloodParticles.add(BloodParticle(
+                            id = nextParticleId++,
+                            x = s.playerX,
+                            y = s.playerY,
+                            vx = cos(angle).toFloat() * speed,
+                            vy = sin(angle).toFloat() * speed,
+                            life = 1.0f,
+                            size = 4f + Math.random().toFloat() * 4f
+                        ))
+                    }
 
                     // Aplicar retroceso al jugador al ser golpeado (Online)
                     val dx = s.playerX - z.x
@@ -667,6 +721,7 @@ class ZombieGameViewModel(
                 playerX = finalPX,
                 playerY = finalPY,
                 damagePulseTrigger = pulse,
+                bloodParticles = newBloodParticles,
                 nearbyItemId = nearItem?.id,
                 activeEffects = if (effectsChanged) stillActive else it.activeEffects
             )
