@@ -88,7 +88,7 @@ class ZombieGameViewModel(
         const val STALKER_ATTACK_FRAME_COUNT = 4
         const val STALKER_ATTACK_DIST = 85f
 
-        const val CONTACT_DIST = 56f
+        const val CONTACT_DIST = 42f
         const val ZOMBIE_DAMAGE = 12f
         const val ZOMBIE_DAMAGE_COOLDOWN_MS = 3000L
 
@@ -472,8 +472,15 @@ class ZombieGameViewModel(
     }
 
     private fun tick() {
-        val s = _state.value
         val now = System.currentTimeMillis()
+
+        // Passive regeneration in LOBBY: +5 HP per second
+        if (currentRoom().id == ZombieRoomCatalog.LOBBY_ID && _state.value.playerHealth < 100f) {
+            val regen = 5f * TICK_MS / 1000f
+            _state.update { it.copy(playerHealth = (it.playerHealth + regen).coerceAtMost(100f)) }
+        }
+
+        val s = _state.value
 
         // El envío de posición va SIEMPRE primero (igual que antes).
         sendPlayerUpdate(now)
